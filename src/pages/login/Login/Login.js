@@ -1,11 +1,15 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../contexts/AuthProvider/AuthProvider';
 const Login = () => {
+    const [error, setError] = useState('');
+    const { signIn, setLoading } = useContext(AuthContext);
+    let location = useLocation();
+    const from = location.state?.from?.pathname || '/';
 
-    const { signIn } = useContext(AuthContext);
     const navigate = useNavigate();
     const handleSignIn = (event) => {
         event.preventDefault();
@@ -18,9 +22,21 @@ const Login = () => {
                 const user = result.user;
                 console.log(user);
                 form.reset();
-                navigate('/')
+                setError('')
+                if (user.emailVerified) {
+                    navigate(from, { replace: true })
+                }
+                else {
+                    toast.error('Email is not verified,Please verify first.')
+                }
             })
-            .catch(error => console.error(error))
+            .catch(error => {
+                console.error(error);
+                setError(error.message);
+            })
+            .finally(() => {
+                setLoading(false);
+            })
 
     }
 
@@ -39,7 +55,7 @@ const Login = () => {
                 Login
             </Button>
             <Form.Text className=" m-2 text-danger">
-                We'll never share your email with anyone else.
+                {error}
             </Form.Text>
         </Form>
     );
